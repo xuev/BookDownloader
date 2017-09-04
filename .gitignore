@@ -90,3 +90,5 @@ ENV/
 
 # IDE_idea
 .idea/
+
+.txt
