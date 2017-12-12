@@ -31,7 +31,7 @@ class load_book(object):
         self.content = {}
 
     def b_link_load(self):
-        params = {"q": self.b_name, "entry": 1, "s": 1101330821780029220, "isNeedCheckDomain": 1, "jump": 1}
+        params = {"q": self.b_name, "entry": 1, "s": 1462921654728649351, "isNeedCheckDomain": 1, "jump": 1}
         url = "http://zhannei.baidu.com/cse/search"
         try:
             r = requests.get(url, params=params)
@@ -39,8 +39,10 @@ class load_book(object):
             if r.url == "http://www.baidu.com/search/error.html":
                 return False
             else:
-                bsObj = BeautifulSoup(r.text, "lxml").findAll("a", {"cpos": "title"})[0]
-                return bsObj["href"]
+                # bsObj = BeautifulSoup(r.text, "lxml").findAll("a", {"cpos": "title"})[1]
+                # return bsObj["href"]
+                aaa = 'http://www.mpzw.com/html/142/142270/index.html'
+                return aaa
         except:
             print("获取目录失败,一秒后重试，失败链接：", url, params)
             time.sleep(1)
@@ -51,13 +53,16 @@ class load_book(object):
         links = []
         r = requests.get(self.b_link)
         r.encoding = "gbk"
-        bsObj = BeautifulSoup(r.text, "lxml").findAll("li")
-        for i in bsObj:
-            try:
-                url = link + i.a["href"]
-                links.append((url, i.get_text()))
-            except TypeError:
-                print(i, "获取章节链接错误")
+        links = [('http://www.mpzw.com/html/142/142270/30966207.html', u'第二章 离异美女')]
+        # bbb = r.text
+        # bsObj = BeautifulSoup(r.text, "lxml").findAll("a")
+        # for i in bsObj:
+        #     try:
+        #         url = link + i["href"]
+        #         # ccc = url
+        #         links.append((url, i.get_text()))
+        #     except TypeError:
+        #         print(i, "获取章节链接错误")
         print links
         return links
 
@@ -65,14 +70,16 @@ class load_book(object):
         for i in links:
             try:
                 r = requests.get(i[0])
-                r.encoding = "gbk"
-                bsObj = BeautifulSoup(r.text, "lxml").find(id="BookText")
-                content = [content.text for content in bsObj.find_all('p')]
-                content = '\n'.join(content)
+                r.encoding = 'gbk'
+                bsObj = BeautifulSoup(r.text, "lxml").find(id="cont")
+                content = [content.text for content in bsObj.find_all('div', {'id':'clickeye_content'})]
+                # content = '\n'.join(content)
 
                 # content = re.compile(r"<!--章节内容开始-->(.*)<!--章节内容结束-->").search(str(bsObj))  # 把章节内容提取出来
                 # content = re.compile("<br/><br/>").sub("\n", content.group(1))  # 把网页的<br/><br/>替换成换行符
-                self.content[i[1]] = content[:-8]
+                # self.content[i[1]] = content[:-8]
+                # ccc = content[i]
+                # self.content[i[1]] = 'aaabbbccc'
                 print(i[1], "抓取完成")
             except (TypeError, AttributeError):
                 print("*" * 10, "%s章节错漏" % i[1])
@@ -105,10 +112,12 @@ class load_book(object):
         print("开始制作txt文档")
         f = open(self.b_name + ".txt", "w", encoding="utf-8")
         # f.write(" " * 20 + self.b_name + "\n")
+        ddd = self.b_directory
         for i in self.b_directory:
             try:
                 title = "\n\n" + " " * 20 + i[1] + "\n"
                 f.write(title)
+                ddd = self.content[i]
                 f.write(self.content[i[1]])
             except KeyError:
                 print("*" * 10, "缺失章节为：", i[1])

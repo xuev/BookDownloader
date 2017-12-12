@@ -73,6 +73,8 @@ class load_book(object):
                 # content = re.compile(r"<!--章节内容开始-->(.*)<!--章节内容结束-->").search(str(bsObj))  # 把章节内容提取出来
                 # content = re.compile("<br/><br/>").sub("\n", content.group(1))  # 把网页的<br/><br/>替换成换行符
                 self.content[i[1]] = content[:-8]
+                sss = self.content[i[1]]
+                xxx = content
                 print(i[1], "抓取完成")
             except (TypeError, AttributeError):
                 print("*" * 10, "%s章节错漏" % i[1])
@@ -116,6 +118,6 @@ class load_book(object):
 
 
 if __name__ == '__main__':
-    book = load_book("猛男诞生记")
+    book = load_book("仕途天骄")
     book.contents_load(10)
     book.write_txt()
