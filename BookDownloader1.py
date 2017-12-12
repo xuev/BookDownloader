@@ -72,7 +72,7 @@ class load_book(object):
                 r = requests.get(i[0])
                 r.encoding = 'gbk'
                 bsObj = BeautifulSoup(r.text, "lxml").find(id="cont")
-                content = [content.text for content in bsObj.find_all('div', {'id':'clickeye_content'})]
+                content = [content.text for content in bsObj.find_all('div', {'id': 'clickeye_content'})]
                 # content = '\n'.join(content)
 
                 # content = re.compile(r"<!--章节内容开始-->(.*)<!--章节内容结束-->").search(str(bsObj))  # 把章节内容提取出来
