@@ -7,20 +7,20 @@
 @Author:        xuev
 @Contact:       xuewei918@gmail.com
 @Project:       BookDownloader
-@FileName:      xsyqw.py
+@FileName:      mpzw.py
 @Version:       0.0.1
 @License:       MIT Licence
-@Created on:    2017/12/9 03:55
-@Description:   Download book from http://www.xsyqw.com
+@Created on:    2017/12/13 02:48
+@Description:   Download book from http://www.mpzw.com
 -------------------------------------------------
 """
 
 import sys
 import requests
-import re
-import threading
 from bs4 import BeautifulSoup
+import threading
 import time
+import re
 from io import open
 
 reload(sys)
@@ -35,52 +35,56 @@ class load_book(object):
         self.content = {}
 
     def b_link_load(self):
+        params = {"q": self.b_name, "entry": 1, "s": 1462921654728649351}   # 搜索栏参数
+        url = "http://zhannei.baidu.com/cse/search"
         try:
-            book_link = 'http://www.xsyqw.com/files/article/html/8/8640/index.html'
-            return book_link
+            r = requests.get(url, params=params)
+            r.encoding = "utf-8"
+            if r.url == "http://www.baidu.com/search/error.html":
+                return False
+            else:
+                bs_obj = BeautifulSoup(r.text, "lxml").findAll("a", {"cpos": "title"})[1]   # 搜索结果的列表顺序
+                print bs_obj["href"]
+                return bs_obj["href"]
         except:
-            # print("获取目录失败,一秒后重试，失败链接：", url, params)
-            return False
+            print("获取目录失败,一秒后重试，失败链接：", url, params)
+            time.sleep(3)
+            self.b_link_load()
 
     def directory(self):
         link = self.b_link[:-10]
-        print link
         links = []
         r = requests.get(self.b_link)
-        r.encoding = "gb2312"
-        bsObj = BeautifulSoup(r.text, "lxml").findAll("li")
-        print '获取章节链接...'
-        for i in bsObj:
+        r.encoding = "gbk"
+        bs_obj = BeautifulSoup(r.text, "lxml").find_all("td", {"class": "ccss"})
+        for i in bs_obj:
             try:
                 url = link + i.a["href"]
-                # print url
-                # print i.get_text()
-                links.append((url, i.get_text()))
-            except TypeError:
+                sec_name = re.sub("\n", "", i.get_text())
+                links.append((url, sec_name))
+            except:
                 print(i, "获取章节链接错误")
-        print '章节链接获取完成.'
+        print links
         return links
 
     def section_load(self, links):
-        print '获取章节内容...'
         for i in links:
             try:
                 r = requests.get(i[0])
-                r.encoding = "gb2312"
-                bs_obj = BeautifulSoup(r.text, "lxml").find(id="htmlContent")
+                r.encoding = "gbk"
+                bs_obj = BeautifulSoup(r.text, "lxml").find(id="clickeye_content")
                 if bs_obj != None:
                     content = bs_obj.get_text("\n", strip=True)
+                    # content = re.compile("(猫扑中文 www.mpzw.com)    ").sub("", content)
                 self.content[i[1]] = content
-                print (i[1], u"抓取完成")
-
+                print(i[1], "抓取完成")
             except (TypeError, AttributeError):
-                print ("*" * 10, "%s 章节错漏" % i[1])
+                print("*" * 10, "%s章节错漏" % i[1])
             except:
-                print ("*" * 10, "%s 抓取错误，重试中" % i[1])
-            # links.insert(0, i)
-        print '章节内容获取完成.'
+                print("*" * 20, "%s抓取错误，重试中" % i[1])
+                links.insert(0, i)
 
-    def contents_load(self, loops=1):
+    def contents_load(self, loops=10):
         threads = []
         nloops = range(loops)
         task_list = []
@@ -102,21 +106,18 @@ class load_book(object):
             threads[i].join()
 
     def write_txt(self):
-        print ("开始制作txt文档")
+        print("开始制作txt文档")
         f = open(self.b_name + ".txt", "w", encoding="utf-8")
         for i in self.b_directory:
             try:
                 title = "\n\n" + i[1] + "\n"
                 f.write(title)
-                if self.content[i[1]] != None:
-                    f.write(self.content[i[1]])
+                f.write(self.content[i[1]])
             except KeyError:
-                print ("*" * 10, "缺失章节为：", i[1])
+                print("*" * 10, "缺失章节为：", i[1])
         f.close()
 
-
 if __name__ == '__main__':
-    book = load_book("桃针医少")
+    book = load_book("最强雇佣兵")
     book.contents_load(10)
-    # book.section_load(links=book.b_directory)
     book.write_txt()
